@@ -5,28 +5,34 @@ import torch.nn.functional as F
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
-
+from tqdm import tqdm
 from data_loader import PoseDataset
 
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(14, 30)
+        self.fc1 = nn.Linear(16, 30)
         self.fc1_bn = nn.BatchNorm1d(30)
         self.fc2 = nn.Linear(30, 20)
         self.fc2_bn = nn.BatchNorm1d(20)
-        self.fc3 = nn.Linear(20, 7)
+        self.fc3 = nn.Linear(20, 8)
 
     def forward(self, x):
-        x = x.view(-1, 14)
+        x = x.view(-1, 16)
         x = F.relu(self.fc1_bn(self.fc1(x)))
         x = F.relu(self.fc2_bn(self.fc2(x)))
         x = self.fc3(x)
         return x
 
-
 def validate(model, criterion, test_loader, device):
+    """Validation method
+
+    Keyword Arguments:
+    model - neural network
+    criterion - loss function
+    test_loader - dataloader for test set
+    device - cpu / cuda"""
     loss = 0
 
     for idx, (skel_2d, skel_z) in enumerate(test_loader):
@@ -48,8 +54,8 @@ def train():
     train_idx = list(set(indices) - set(val_idx))
     train_sampler = SubsetRandomSampler(train_idx)
     val_sampler = SubsetRandomSampler(val_idx)
-    train_loader = DataLoader(dataset=pose_dataset, batch_size=32, sampler=train_sampler)
-    val_loader = DataLoader(dataset=pose_dataset, batch_size=32, sampler=val_sampler)
+    train_loader = DataLoader(dataset=pose_dataset, batch_size=2000, sampler=train_sampler)
+    val_loader = DataLoader(dataset=pose_dataset, batch_size=2000, sampler=val_sampler)
 
     # save val_idx
     np.save('val_idx.npy', val_idx)
@@ -64,15 +70,18 @@ def train():
 
     # define loss & optimizer
     criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = torch.optim.SGD(net.parameters(), lr=0.04, momentum=0.9)
     scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True)
 
+    print_stats = 20
+
     # train
-    for epoch in range(10):
+    for epoch in range(200):
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
             # get the inputs
             skel_2d, skel_z = data
+            print(np.shape(skel_2d))
             inputs = skel_2d
             labels = skel_z
             inputs, labels = inputs.to(device), labels.to(device)
@@ -88,7 +97,7 @@ def train():
 
             # validate and print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
+            if i % print_stats == 0:  # print every 2000 mini-batches
                 # validate
                 with torch.no_grad():
                     net.eval()
@@ -97,7 +106,7 @@ def train():
                     scheduler.step(val_loss)
 
                 # print
-                train_loss = running_loss / 2000
+                train_loss = running_loss / print_stats
                 print('[%d, %5d] train loss: %.3f, val loss: %.3f' % (epoch + 1, i + 1, train_loss, val_loss))
                 running_loss = 0.0
 

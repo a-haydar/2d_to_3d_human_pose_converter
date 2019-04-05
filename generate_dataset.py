@@ -70,7 +70,7 @@ def generate_dataset():
     skeletons_3d = []
     for frame in frames:
         for body in frame['bodies']:
-            to15 = body['joints19'][:14]
+            print(np.shape(body['joints19']))
             skel = np.array(body['joints19']).reshape((-1, 4)).transpose()
             skel = normalize_skeleton(skel)
             skeletons_3d.append(skel)
@@ -101,7 +101,7 @@ def generate_dataset():
     # save dataset
     print('saving...')
     dataset = {'3d': skeletons_3d, '2d': skeletons_2d}
-    with open('panoptic_dataset.pickle', 'wb') as f:
+    with open('panoptic_dataset_15.pickle', 'wb') as f:
         pickle.dump(dataset, f)
 
 
@@ -109,7 +109,6 @@ def review_dataset():
     # load
     with open('panoptic_dataset.pickle', 'rb') as f:
         dataset = pickle.load(f)
-
     # init figures and variables
     fig = plt.figure()
     ax1 = fig.add_subplot(2, 2, 1, projection='3d')
@@ -132,7 +131,6 @@ def review_dataset():
         idx = randint(0, len(dataset['3d'])-1)
         skel_3d = dataset['3d'][idx]
         skel_2d = dataset['2d'][idx]
-
         # draw 3d
         for edge_i, edge in enumerate(edges_upper):
             ax_3d.plot(skel_3d[0, edge], skel_3d[2, edge], skel_3d[1, edge], color=colors[edge_i])

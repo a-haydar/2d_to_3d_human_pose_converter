@@ -24,7 +24,7 @@ class PoseDataset(Dataset):
         return len(self.pairs)
 
     def __getitem__(self, idx):
-        idx_upper = [0, 3, 4, 5, 9, 10, 11]  # upper-body joints
+        idx_upper = [0, 1, 3, 4, 5, 9, 10, 11]  # upper-body joints
         pair = self.pairs[idx]
 
         # [dim x joints] -> (x1,y1,x2,y2,...)

@@ -2,6 +2,7 @@ import torch
 
 import numpy as np
 import matplotlib.pyplot as plt
+%matplotlib inline
 from mpl_toolkits.mplot3d import Axes3D
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -11,11 +12,17 @@ from train import Net
 
 
 def show_skeletons(skel_2d, z_out, z_gt=None):
-    # init figures and variables
+    """Show skeleton in 2D and 3D, includes full upper body and headself.
+
+    Keyword Arguments:
+    skel_2d - skeleton with x,y coordinates
+    z_out - predicted z coordinates (for 3d)
+    z_gt - ground truth z coordinates
+    """
     fig = plt.figure(figsize=(20, 20))
     ax1 = fig.add_subplot(1, 2, 1)
     ax2 = fig.add_subplot(1, 2, 2, projection='3d')
-    edges = np.array([[0, 1], [1, 2], [2, 3], [0, 4], [4, 5], [5, 6]])
+    edges = np.array([[1, 0], [0, 2],[2, 3], [3, 4], [0, 5], [5, 6], [6, 7]])
 
     ax_2d = ax1
     ax_3d = ax2
@@ -43,14 +50,14 @@ def show_skeletons(skel_2d, z_out, z_gt=None):
 
 
 def test():
-    # cpu or gpu?
+    """Test Method"""
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('using device {}'.format(device))
 
     # load net
     net = Net()
     net.to(device)
-    net.load_state_dict(torch.load('trained_net.pt'))
+    net.load_state_dict(torch.load('including_neck.pt'))
     net.train(False)
 
     # sample data
@@ -59,10 +66,9 @@ def test():
     pose_dataset = PoseDataset('panoptic_dataset.pickle')
     val_loader = DataLoader(dataset=pose_dataset, batch_size=1, sampler=val_sampler)
 
-    while True:
+    for i in range(5):
         data_iter = iter(val_loader)
         skel_2d, skel_z = next(data_iter)
-        print(skel_2d)
 
         # inference
         skel_2d = skel_2d.to(device)
