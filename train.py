@@ -7,23 +7,8 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from tqdm import tqdm
 from data_loader import PoseDataset
+from model import Net
 
-
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.fc1 = nn.Linear(16, 30)
-        self.fc1_bn = nn.BatchNorm1d(30)
-        self.fc2 = nn.Linear(30, 20)
-        self.fc2_bn = nn.BatchNorm1d(20)
-        self.fc3 = nn.Linear(20, 8)
-
-    def forward(self, x):
-        x = x.view(-1, 16)
-        x = F.relu(self.fc1_bn(self.fc1(x)))
-        x = F.relu(self.fc2_bn(self.fc2(x)))
-        x = self.fc3(x)
-        return x
 
 def validate(model, criterion, test_loader, device):
     """Validation method
@@ -34,7 +19,6 @@ def validate(model, criterion, test_loader, device):
     test_loader - dataloader for test set
     device - cpu / cuda"""
     loss = 0
-
     for idx, (skel_2d, skel_z) in enumerate(test_loader):
         inputs, labels = skel_2d.to(device), skel_z.to(device)
         outputs = model(inputs)
@@ -42,10 +26,26 @@ def validate(model, criterion, test_loader, device):
 
     return loss / len(test_loader)
 
+def savebest(model, epoch, val_loss):
+    """Saving the best model given the validation loss.
 
-def train():
-    # load data
-    pose_dataset = PoseDataset('panoptic_dataset.pickle')
+    Keyword Arguments:
+    model - neural network model
+    epoch - epoch we're on
+    val_loss - loss on the validation set"""
+    save_path = './models/{}_{}.pth'.format(epoch, val_loss)
+    torch.save(model.state_dict(), save_path)
+
+def train(dataset_path, batch_size, learning_rate, momentum):
+    """Training loop, saves the best model.
+
+    Keyword Arguments:
+    dataset_path - path to pickled generated dataset
+    batch_size - batch size for training and validating
+    learning_rate - learning rate to start with
+    momentum - sgd momentum
+    """
+    pose_dataset = PoseDataset(dataset_path)
 
     # random, non-contiguous train/val split
     indices = list(range(len(pose_dataset)))
@@ -54,8 +54,10 @@ def train():
     train_idx = list(set(indices) - set(val_idx))
     train_sampler = SubsetRandomSampler(train_idx)
     val_sampler = SubsetRandomSampler(val_idx)
-    train_loader = DataLoader(dataset=pose_dataset, batch_size=2000, sampler=train_sampler)
-    val_loader = DataLoader(dataset=pose_dataset, batch_size=2000, sampler=val_sampler)
+    train_loader = DataLoader(dataset=pose_dataset, batch_size=batch_size,\
+        sampler=train_sampler)
+    val_loader = DataLoader(dataset=pose_dataset, batch_size=batch_size,\
+        sampler=val_sampler)
 
     # save val_idx
     np.save('val_idx.npy', val_idx)
@@ -70,8 +72,9 @@ def train():
 
     # define loss & optimizer
     criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.04, momentum=0.9)
+    optimizer = torch.optim.SGD(net.parameters(), learning_rate, momentum)
     scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=True)
+    best_loss = 0.0
 
     print_stats = 20
 
@@ -81,15 +84,12 @@ def train():
         for i, data in enumerate(train_loader, 0):
             # get the inputs
             skel_2d, skel_z = data
-            print(np.shape(skel_2d))
             inputs = skel_2d
             labels = skel_z
             inputs, labels = inputs.to(device), labels.to(device)
 
-            # zero the parameter gradients
             optimizer.zero_grad()
 
-            # forward + backward + optimize
             outputs = net(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
@@ -102,18 +102,24 @@ def train():
                 with torch.no_grad():
                     net.eval()
                     val_loss = validate(net, criterion, val_loader, device)
+                    if best_loss == 0.0:
+                        best_loss = val_loss
+                    if val_loss < best_loss:
+                        best_loss = val_loss
+                        savebest(net, epoch, val_loss)
                     net.train()
                     scheduler.step(val_loss)
 
                 # print
                 train_loss = running_loss / print_stats
-                print('[%d, %5d] train loss: %.3f, val loss: %.3f' % (epoch + 1, i + 1, train_loss, val_loss))
+                print('[%d, %5d] train loss: %.3f, val loss: %.3f' %\
+                    (epoch + 1, i + 1, train_loss, val_loss))
                 running_loss = 0.0
-
-    # save model
-    print('finished training, saving the model...')
-    torch.save(net.state_dict(), 'trained_net.pt')
 
 
 if __name__ == "__main__":
-    train()
+    dataset_path = './data/panoptic_dataset.pickle'
+    batch_size = 2000
+    learning_rate = 0.04
+    momentum = 0.9
+    train(dataset_path, batch_size, learning_rate, momentum)

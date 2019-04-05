@@ -1,6 +1,7 @@
 """
 Functions that help with data processing for human3.6m
-from https://github.com/una-dinosauria/human-motion-prediction/blob/master/src/data_utils.py
+from https://github.com/una-dinosauria/human-motion-prediction/
+    blob/master/src/data_utils.py
 """
 
 from __future__ import absolute_import
@@ -16,12 +17,13 @@ def rotmat2euler(R):
     """
     Converts a rotation matrix to Euler angles
     Matlab port to python for evaluation purposes
-    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/CRFProblems/H3.6m/mhmublv/Motion/RotMat2Euler.m#L1
+    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/
+        CRFProblems/H3.6m/mhmublv/Motion/RotMat2Euler.m#L1
 
-    Args
-      R: a 3x3 rotation matrix
+    Keyword Argument
+      R - a 3x3 rotation matrix
     Returns
-      eul: a 3x1 Euler angle representation of R
+      eul - a 3x1 Euler angle representation of R
     """
     if R[0, 2] == 1 or R[0, 2] == -1:
         # special case
@@ -48,7 +50,8 @@ def quat2expmap(q):
     """
     Converts a quaternion to an exponential map
     Matlab port to python for evaluation purposes
-    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/CRFProblems/H3.6m/mhmublv/Motion/quat2expmap.m#L1
+    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/
+        CRFProblems/H3.6m/mhmublv/Motion/quat2expmap.m#L1
 
     Args
       q: 1x4 quaternion
@@ -79,12 +82,13 @@ def rotmat2quat(R):
     """
     Converts a rotation matrix to a quaternion
     Matlab port to python for evaluation purposes
-    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/CRFProblems/H3.6m/mhmublv/Motion/rotmat2quat.m#L4
+    https://github.com/asheshjain399/RNNexp/blob/srnn/
+        structural_rnn/CRFProblems/H3.6m/mhmublv/Motion/rotmat2quat.m#L4
 
-    Args
-      R: 3x3 rotation matrix
+    Keyword Argument:
+    R - 3x3 rotation matrix
     Returns
-      q: 1x4 quaternion
+    q - 1x4 quaternion
     """
     rotdiff = R - R.T;
 
@@ -114,10 +118,11 @@ def expmap2rotmat(r):
     Converts an exponential map angle to a rotation matrix
     Matlab port to python for evaluation purposes
     I believe this is also called Rodrigues' formula
-    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/CRFProblems/H3.6m/mhmublv/Motion/expmap2rotmat.m
+    https://github.com/asheshjain399/RNNexp/blob/srnn/
+        structural_rnn/CRFProblems/H3.6m/mhmublv/Motion/expmap2rotmat.m
 
-    Args
-      r: 1x3 exponential map
+    Keyword Arguments
+      r - 1x3 exponential map
     Returns
       R: 3x3 rotation matrix
     """
@@ -129,19 +134,19 @@ def expmap2rotmat(r):
     return R
 
 
-def unNormalizeData(normalizedData, data_mean, data_std, dimensions_to_ignore, actions, one_hot):
+def unNormalizeData(normalizedData, data_mean, data_std, dimensions_to_ignore,\
+        actions, one_hot):
     """Borrowed from SRNN code. Reads a csv file and returns a float32 matrix.
-    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/CRFProblems/H3.6m/generateMotionData.py#L12
+    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/
+        CRFProblems/H3.6m/generateMotionData.py#L12
 
-    Args
-      normalizedData: nxd matrix with normalized data
-      data_mean: vector of mean used to normalize the data
-      data_std: vector of standard deviation used to normalize the data
-      dimensions_to_ignore: vector with dimensions not used by the model
-      actions: list of strings with the encoded actions
-      one_hot: whether the data comes with one-hot encoding
-    Returns
-      origData: data originally used to
+    Keyword Arguments
+    normalizedData -  nxd matrix with normalized data
+    data_mean - vector of mean used to normalize the data
+    data_std - vector of standard deviation used to normalize the data
+    dimensions_to_ignore - vector with dimensions not used by the model
+    actions - list of strings with the encoded actions
+    one_hot - whether the data comes with one-hot encoding
     """
     T = normalizedData.shape[0]
     D = data_mean.shape[0]
@@ -173,9 +178,9 @@ def revert_output_format(poses, data_mean, data_std, dim_to_ignore, actions, one
     Converts the output of the neural network to a format that is more easy to
     manipulate for, e.g. conversion to other format or visualization
 
-    Args
-      poses: The output from the TF model. A list with (seq_length) entries,
-      each with a (batch_size, dim) output
+    Keyword Argument
+    poses - The output from the TF model. A list with (seq_length) entries,
+    each with a (batch_size, dim) output
     Returns
       poses_out: A tensor of size (batch_size, seq_length, dim) output. Each
       batch is an n-by-d sequence of poses.
@@ -193,7 +198,8 @@ def revert_output_format(poses, data_mean, data_std, dim_to_ignore, actions, one
     poses_out_list = []
     for i in xrange(poses_out.shape[0]):
         poses_out_list.append(
-            unNormalizeData(poses_out[i, :, :], data_mean, data_std, dim_to_ignore, actions, one_hot))
+            unNormalizeData(poses_out[i, :, :], data_mean, data_std,\
+                dim_to_ignore, actions, one_hot))
 
     return poses_out_list
 
@@ -203,8 +209,8 @@ def readCSVasFloat(filename):
     Borrowed from SRNN code. Reads a csv and returns a float matrix.
     https://github.com/asheshjain399/NeuralModels/blob/master/neuralmodels/utils.py#L34
 
-    Args
-      filename: string. Path to the csv file
+    Keyword Arguments:
+      filename -string. Path to the csv file
     Returns
       returnArray: the read data in a float32 matrix
     """
@@ -221,8 +227,10 @@ def readCSVasFloat(filename):
 
 def load_data(path_to_dataset, subjects, actions, one_hot):
     """
-    Borrowed from SRNN code. This is how the SRNN code reads the provided .txt files
-    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/CRFProblems/H3.6m/processdata.py#L270
+    Borrowed from SRNN code.
+    This is how the SRNN code reads the provided .txt files
+    https://github.com/asheshjain399/RNNexp/blob/srnn
+        /structural_rnn/CRFProblems/H3.6m/processdata.py#L270
 
     Args
       path_to_dataset: string. directory where the data resides
@@ -245,9 +253,11 @@ def load_data(path_to_dataset, subjects, actions, one_hot):
 
             for subact in [1, 2]:  # subactions
 
-                print("Reading subject {0}, action {1}, subaction {2}".format(subj, action, subact))
+                print("Reading subject {0}, action {1}, subaction {2}".\
+                    format(subj, action, subact))
 
-                filename = '{0}/S{1}/{2}_{3}.txt'.format(path_to_dataset, subj, action, subact)
+                filename = '{0}/S{1}/{2}_{3}.txt'.\
+                    format(path_to_dataset, subj, action, subact)
                 action_sequence = readCSVasFloat(filename)
 
                 n, d = action_sequence.shape
@@ -255,17 +265,20 @@ def load_data(path_to_dataset, subjects, actions, one_hot):
 
                 if one_hot:
                     # Add a one-hot encoding at the end of the representation
-                    the_sequence = np.zeros((len(even_list), d + nactions), dtype=float)
+                    the_sequence = np.zeros((len(even_list),\
+                        d + nactions), dtype=float)
                     the_sequence[:, 0:d] = action_sequence[even_list, :]
                     the_sequence[:, d + action_idx] = 1
                     trainData[(subj, action, subact, 'even')] = the_sequence
                 else:
-                    trainData[(subj, action, subact, 'even')] = action_sequence[even_list, :]
+                    trainData[(subj, action, subact, 'even')] =\
+                        action_sequence[even_list, :]
 
                 if len(completeData) == 0:
                     completeData = copy.deepcopy(action_sequence)
                 else:
-                    completeData = np.append(completeData, action_sequence, axis=0)
+                    completeData = np.append(completeData,\
+                        action_sequence, axis=0)
 
     return trainData, completeData
 
@@ -306,16 +319,17 @@ def normalize_data(data, data_mean, data_std, dim_to_use, actions, one_hot):
 
 def normalization_stats(completeData):
     """"
-    Also borrowed for SRNN code. Computes mean, stdev and dimensions to ignore.
-    https://github.com/asheshjain399/RNNexp/blob/srnn/structural_rnn/CRFProblems/H3.6m/processdata.py#L33
+    Borrowed from SRNN code. Computes mean, stdev and dimensions to ignore.
+    https://github.com/asheshjain399/RNNexp/blob/srnn/
+        structural_rnn/CRFProblems/H3.6m/processdata.py#L33
 
-    Args
-      completeData: nx99 matrix with data to normalize
+    Keyword Arguments:
+    completeData - nx99 matrix with data to normalize
     Returns
-      data_mean: vector of mean used to normalize the data
-      data_std: vector of standard deviation used to normalize the data
-      dimensions_to_ignore: vector with dimensions not used by the model
-      dimensions_to_use: vector with dimensions used by the model
+      data_mean - vector of mean used to normalize the data
+      data_std - vector of standard deviation used to normalize the data
+      dimensions_to_ignore - vector with dimensions not used by the model
+      dimensions_to_use -  vector with dimensions used by the model
     """
     data_mean = np.mean(completeData, axis=0)
     data_std = np.std(completeData, axis=0)

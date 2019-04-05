@@ -49,22 +49,29 @@ def show_skeletons(skel_2d, z_out, z_gt=None):
     plt.show()
 
 
-def test():
-    """Test Method"""
+def test(network_path, dataset_path, validation_set):
+    """Test Method
+
+    Keyword Arguments:
+    network_path = path to network structure
+    dataset_path = path to pickled dataset
+    validation_set = path to saved validation indexes
+    """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('using device {}'.format(device))
 
     # load net
     net = Net()
     net.to(device)
-    net.load_state_dict(torch.load('including_neck.pt'))
+    net.load_state_dict(torch.load(network_path))
     net.train(False)
 
     # sample data
-    val_idx = np.load('val_idx.npy')
+    val_idx = np.load(validation_set)
     val_sampler = SubsetRandomSampler(val_idx)
-    pose_dataset = PoseDataset('panoptic_dataset.pickle')
-    val_loader = DataLoader(dataset=pose_dataset, batch_size=1, sampler=val_sampler)
+    pose_dataset = PoseDataset(dataset_path)
+    val_loader = DataLoader(dataset=pose_dataset, batch_size=1,\
+        sampler=val_sampler)
 
     for i in range(5):
         data_iter = iter(val_loader)
@@ -84,4 +91,7 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    network_path = './models/'
+    dataset_path = './data/panoptic_dataset.pickle'
+    validation_set = './data/val_idx.npy'
+    test(network_path, dataset_path, validation_set)

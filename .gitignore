@@ -1,2 +1,4 @@
 panoptic_dataset/
+data/
+models/
 *.pickle
