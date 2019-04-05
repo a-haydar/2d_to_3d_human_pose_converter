@@ -70,7 +70,8 @@ def generate_dataset():
     skeletons_3d = []
     for frame in frames:
         for body in frame['bodies']:
-            skel = np.array(body['joints15']).reshape((-1, 4)).transpose()
+            to15 = body['joints19'][:14]
+            skel = np.array(body['joints19']).reshape((-1, 4)).transpose()
             skel = normalize_skeleton(skel)
             skeletons_3d.append(skel)
 
@@ -153,5 +154,5 @@ def review_dataset():
 
 
 if __name__ == "__main__":
-    generate_dataset()
-    # review_dataset()
+    #generate_dataset()
+    review_dataset()
